@@ -40,7 +40,7 @@ public class TinyUrlService extends StatefulService {
     @Override
     public void handleStart(Operation op) {
         if (!op.hasBody()) {
-            op.fail(new IllegalArgumentException("body is required"));
+            op.fail(new IllegalArgumentException("Body is required"));
             return;
         }
 
@@ -52,15 +52,34 @@ public class TinyUrlService extends StatefulService {
         op.complete();
     }
 
-    private boolean validate(Operation op, UrlState state) {
-        if (state.url == null) {
-            op.fail(new IllegalArgumentException("url is required"));
-            return false;
+    @Override
+    public void handlePut(Operation put) {
+        UrlState currentState = getState(put);
+        UrlState newState = put.getBody(UrlState.class);
+
+        if (newState == null) {
+            put.fail(new IllegalArgumentException("New state is null"));
+            return;
         }
 
+        // We allow to change everything except URL
+        if (currentState.url.equals(newState.url)) {
+            put.complete();
+            return;
+        }
+
+        put.fail(new IllegalArgumentException("Cannot change existing URL"));
+    }
+
+    private boolean validate(Operation op, UrlState state) {
+        if (state.url == null) {
+            op.fail(new IllegalArgumentException("Url is required"));
+            return false;
+        }
         try {
             new URL(state.url);
         } catch (MalformedURLException e) {
+            op.fail(new IllegalArgumentException("Url is invalid (must include https or https)"));
             // the URL is not in a valid form
             return false;
         }

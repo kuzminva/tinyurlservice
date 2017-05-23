@@ -12,6 +12,7 @@
 import java.util.logging.Level;
 
 import com.vmware.xenon.common.CommandLineArgumentParser;
+import com.vmware.xenon.services.common.RootNamespaceService;
 import com.vmware.xenon.common.ServiceHost;
 
 public class TinyUrlServiceHost extends ServiceHost {
@@ -20,7 +21,9 @@ public class TinyUrlServiceHost extends ServiceHost {
     public ServiceHost start() throws Throwable {
         super.start();
         startDefaultCoreServicesSynchronously();
+        super.startService(new RootNamespaceService());
         super.startFactory(TinyUrlService.class, TinyUrlService::createFactory);
+        super.startService(new TinyUrlGeneratorService());
         return this;
     }
 
